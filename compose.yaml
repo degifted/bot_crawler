@@ -1,0 +1,5 @@
+services:
+  bot_19_11:
+    image: bot_19_11
+    build:
+      context: .
