@@ -1,5 +1,5 @@
 services:
-  bot_19_11:
+  bot_19_11_crawler:
     image: bot_19_11_crawler
     build:
       context: .
