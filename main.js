@@ -145,7 +145,7 @@ async function startCrawler(){
         };
         const messages = await crawler.getMessages(chatMembers[chatName].chat, {
           minId: chatMembers[chatName].lastId,
-          limit: 5000,
+          limit: 2000,
           reverse: true,
           waitTime: 60
         });
