@@ -117,7 +117,7 @@ async function startCrawler(){
           .join('\n')
       });
     } else if (msg.text.startsWith("/add")){
-      chats += msg.text.substring(4);
+      chats += msg.text.substring(4) + '\n';
     } else if (msg.text.startsWith("/del")){
       chats = chats.replace(msg.text.substring(4), '');
     }else{
