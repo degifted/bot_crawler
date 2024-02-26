@@ -9,7 +9,7 @@ const apiHash = "7e6d680256e035b8daf611f328d1683f";
 const botAuthToken = "6420625082:AAHUlWjbsMmDaOwdS7cKqN7PiZL1r3DGGzI";
 const stringSession = new StringSession("1AgAOMTQ5LjE1NC4xNjcuNTEBu8apRUe8rdlq2LELQTDxAatOdC7lhMf83agxd3uvdvY/ESqeOX3kaPWDAiFEAdu+q8bQXmj7SE783nxmAwiZif1wJOAYpGiBDx1Z6y9+qKKeZiroVkYQaoYge5MWfsVMW5ES29gio8PvjwKCJE5cbB/vr6SKbEvxu03jR1s1cXGrF9dOaj1tTZK/alJdClGBQzQX1KHkMAZpzHhBw+HQ4h3i+Gp2hGBk8NViEmlA6wFUjwWxb6SZ9Xs3lVyxTv9mjz8SMJ4LsdudQkBvMyZiwHOZkXc4SwkYUwPSJLGo6Q84bqap8vUWO9PVFyz+ZW37Yrpv1kdVmqLRHjr0GnSNBxU=");
 
-const chats = `
+let chats = `
 LeonidaBedy6810
 Graewka97
 minsk_baraholka7
@@ -87,6 +87,21 @@ politdvizh
 `;
 
 const chatMembers = {};
+async function startCrawler(){
+  const crawler = new TelegramClient(stringSession, apiId, apiHash, {
+    connectionRetries: 5,
+    floodSleepThreshold: 2000,
+  });
+  await crawler.start({
+    phoneNumber: async () => await input.text("Please enter your number: "),
+    password: async () => await input.text("Please enter your password: "),
+    phoneCode: async () => await input.text("Please enter the code you received: "),
+    onError: (err) => console.log(err),
+  });
+  crawler.logger.info(`Session: ${crawler.session.save()}`);
+  //await crawler.sendMessage("me", { message: "The Crawler has been started" });
+  return crawler;
+}
 (async () => {
   const bot = new TelegramClient(new StringSession(), apiId, apiHash, {
     connectionRetries: 5,
@@ -95,40 +110,28 @@ const chatMembers = {};
   await bot.start({botAuthToken});
   bot.addEventHandler(async (event) => {
     const msg = event.message;
-    switch(msg.text){
-      case "/status":
-        await msg.reply({
-          message: Object.keys(chatMembers)
-            .map(chatName => `${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`)
-            .join('\n')
-        });
-        break;
-      case "/start":
-      default:
-        let reply = "";
-        for (const chatName of Object.keys(chatMembers)){
-          if (chatMembers[chatName].ids.includes(+msg._senderId)){
-            reply += `${chatName}\n`;
-          }
+    if (msg.text == "/status"){
+      await msg.reply({
+        message: Object.keys(chatMembers)
+          .map(chatName => `${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`)
+          .join('\n')
+      });
+    } else if (msg.text.startsWith("/add")){
+      chats += msg.text.substring(4);
+    } else if (msg.text.startsWith("/del")){
+      chats = chats.replace(msg.text.substring(4), '');
+    }else{
+      let reply = "";
+      for (const chatName of Object.keys(chatMembers)){
+        if (chatMembers[chatName].ids.includes(+msg._senderId)){
+          reply += `${chatName}\n`;
         }
-        await msg.reply({ message: reply.length ? reply : "Не найдено" });
-        break;
+      }
+      await msg.reply({ message: reply.length ? reply : "Не найдено" });
     }
   }, new NewMessage());
 
-
-  const crawler = new TelegramClient(stringSession, apiId, apiHash, {
-    connectionRetries: 5,
-    floodSleepThreshold: 6000,
-  });
-  await crawler.start({
-    phoneNumber: async () => await input.text("Please enter your number: "),
-    password: async () => await input.text("Please enter your password: "),
-    phoneCode: async () => await input.text("Please enter the code you received: "),
-    onError: (err) => console.log(err),
-  });
-  console.log(`Session: ${crawler.session.save()}`);
-  await crawler.sendMessage("me", { message: "The Crawler has been started" });
+  let crawler = await startCrawler();
 
   while(true){
     for (const chatName of chats.split(/\W/).map(c => c.trim()).filter(c => c.length)){
@@ -142,7 +145,7 @@ const chatMembers = {};
         };
         const messages = await crawler.getMessages(chatMembers[chatName].chat, {
           minId: chatMembers[chatName].lastId,
-          limit: 10000,
+          limit: 5000,
           reverse: true,
           waitTime: 60
         });
@@ -150,7 +153,7 @@ const chatMembers = {};
           chatMembers[chatName].processedMessages += messages.length;
           chatMembers[chatName].totalMessages = messages.total;
           chatMembers[chatName].lastId = messages[messages.length - 1].id;
-          console.log(`${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`);
+          crawler.logger.info(`${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`);
           chatMembers[chatName].ids = Array.from(
             new Set([
               ...chatMembers[chatName].ids,
@@ -162,7 +165,11 @@ const chatMembers = {};
           await sleep(2000);
         }
       }catch(e){
-        console.log(e);
+        crawler.logger.error(e);
+        if (!e.message.includes('username')){
+          await crawler.destroy();
+          crawler = await startCrawler();
+        }
       }
     }
     sleep(60000);
