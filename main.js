@@ -90,7 +90,7 @@ const chatMembers = {};
 async function startCrawler(){
   const crawler = new TelegramClient(stringSession, apiId, apiHash, {
     connectionRetries: 5,
-    floodSleepThreshold: 2000,
+    floodSleepThreshold: 1//2000,
   });
   await crawler.start({
     phoneNumber: async () => await input.text("Please enter your number: "),
@@ -166,7 +166,7 @@ async function startCrawler(){
         }
       }catch(e){
         crawler.logger.error(e);
-        if (e.message.includes('username')) continue;
+        if (e.message.includes('username') || e.errorMessage == 'USERNAME_INVALID') continue;
         if (e.name == 'FloodWaitError'){
           await sleep(60000);
           continue;
