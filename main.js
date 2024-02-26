@@ -10,8 +10,7 @@ const botAuthToken = "6420625082:AAHUlWjbsMmDaOwdS7cKqN7PiZL1r3DGGzI";
 const stringSession = new StringSession("1AgAOMTQ5LjE1NC4xNjcuNTEBu8apRUe8rdlq2LELQTDxAatOdC7lhMf83agxd3uvdvY/ESqeOX3kaPWDAiFEAdu+q8bQXmj7SE783nxmAwiZif1wJOAYpGiBDx1Z6y9+qKKeZiroVkYQaoYge5MWfsVMW5ES29gio8PvjwKCJE5cbB/vr6SKbEvxu03jR1s1cXGrF9dOaj1tTZK/alJdClGBQzQX1KHkMAZpzHhBw+HQ4h3i+Gp2hGBk8NViEmlA6wFUjwWxb6SZ9Xs3lVyxTv9mjz8SMJ4LsdudQkBvMyZiwHOZkXc4SwkYUwPSJLGo6Q84bqap8vUWO9PVFyz+ZW37Yrpv1kdVmqLRHjr0GnSNBxU=");
 
 const chats = `
-mytestlocalgroup
-omega_forever
+LeonidaBedy6810
 Graewka97
 minsk_baraholka7
 ideas97pro_chat
@@ -33,7 +32,6 @@ KhalezinChat
 kiev_minsk
 Kiev_Orlovka
 kievbel_chat
-LeonidaBedy6810
 lepel_strana_chat
 lepel2020
 lepel97pro
@@ -121,12 +119,12 @@ const chatMembers = {};
 
   const crawler = new TelegramClient(stringSession, apiId, apiHash, {
     connectionRetries: 5,
+    floodSleepThreshold: 6000,
   });
   await crawler.start({
     phoneNumber: async () => await input.text("Please enter your number: "),
     password: async () => await input.text("Please enter your password: "),
-    phoneCode: async () =>
-      await input.text("Please enter the code you received: "),
+    phoneCode: async () => await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
   });
   console.log(`Session: ${crawler.session.save()}`);
@@ -134,35 +132,37 @@ const chatMembers = {};
 
   while(true){
     for (const chatName of chats.split(/\W/).map(c => c.trim()).filter(c => c.length)){
-      if (!chatMembers[chatName]) chatMembers[chatName] = {
-        chat: await crawler.getInputEntity(chatName),
-        lastId: 0,
-        processedMessages: 0,
-        totalMessages: 0,
-        ids: []
-      };
-      const messages = await crawler.getMessages(chatMembers[chatName].chat, {
-        minId: chatMembers[chatName].lastId,
-        limit: 5000,
-        reverse: true,
-        waitTime: 60
-      });
-      if (messages && messages.length){
-        chatMembers[chatName].processedMessages += messages.length;
-        chatMembers[chatName].totalMessages = messages.total;
-        chatMembers[chatName].lastId = messages[messages.length - 1].id;
-        console.log(`${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`);
-        chatMembers[chatName].ids = Array.from(
-          new Set([
-            ...chatMembers[chatName].ids,
-            ...messages
-              .filter(m => m.className == 'Message' && m.fromId?.className == 'PeerUser')
-              .map(m => Number(m.fromId?.userId))
-          ])
-        );
-        await sleep(2000);
-      } else {
-        await sleep(10000);
+      try{
+        if (!chatMembers[chatName]) chatMembers[chatName] = {
+          chat: await crawler.getInputEntity(chatName),
+          lastId: 0,
+          processedMessages: 0,
+          totalMessages: 0,
+          ids: []
+        };
+        const messages = await crawler.getMessages(chatMembers[chatName].chat, {
+          minId: chatMembers[chatName].lastId,
+          limit: 10000,
+          reverse: true,
+          waitTime: 60
+        });
+        if (messages && messages.length){
+          chatMembers[chatName].processedMessages += messages.length;
+          chatMembers[chatName].totalMessages = messages.total;
+          chatMembers[chatName].lastId = messages[messages.length - 1].id;
+          console.log(`${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`);
+          chatMembers[chatName].ids = Array.from(
+            new Set([
+              ...chatMembers[chatName].ids,
+              ...messages
+                .filter(m => m.className == 'Message' && m.fromId?.className == 'PeerUser')
+                .map(m => Number(m.fromId?.userId))
+            ])
+          );
+          await sleep(2000);
+        }
+      }catch(e){
+        console.log(e);
       }
     }
     sleep(60000);
