@@ -166,10 +166,14 @@ async function startCrawler(){
         }
       }catch(e){
         crawler.logger.error(e);
-        if (!e.message.includes('username')){
-          await crawler.destroy();
-          crawler = await startCrawler();
+        if (e.message.includes('username')) continue;
+        if (e.name == 'FloodWaitError'){
+          await sleep(60000);
+          continue;
         }
+        await crawler.destroy();
+        await sleep(10000);
+        crawler = await startCrawler();
       }
     }
     sleep(60000);
