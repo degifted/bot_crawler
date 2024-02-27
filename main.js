@@ -88,16 +88,22 @@ politdvizh
 
 const chatMembers = {};
 async function startCrawler(){
-  const crawler = new TelegramClient(stringSession, apiId, apiHash, {
-    connectionRetries: 5,
-    floodSleepThreshold: 1//2000,
-  });
-  await crawler.start({
-    phoneNumber: async () => await input.text("Please enter your number: "),
-    password: async () => await input.text("Please enter your password: "),
-    phoneCode: async () => await input.text("Please enter the code you received: "),
-    onError: (err) => console.log(err),
-  });
+  try{
+    const crawler = new TelegramClient(stringSession, apiId, apiHash, {
+      connectionRetries: 5,
+      floodSleepThreshold: 1//2000,
+    });
+    await crawler.start({
+      phoneNumber: async () => await input.text("Please enter your number: "),
+      password: async () => await input.text("Please enter your password: "),
+      phoneCode: async () => await input.text("Please enter the code you received: "),
+      onError: (err) => console.log(err),
+    });
+  }catch(e){
+    console.error(e);
+    await sleep(60000);
+    return await startCrawler();
+  }
   crawler.logger.info(`Session: ${crawler.session.save()}`);
   //await crawler.sendMessage("me", { message: "The Crawler has been started" });
   return crawler;
