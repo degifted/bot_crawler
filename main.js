@@ -99,14 +99,14 @@ async function startCrawler(){
       phoneCode: async () => await input.text("Please enter the code you received: "),
       onError: (err) => console.log(err),
     });
+    crawler.logger.info(`Session: ${crawler.session.save()}`);
+    //await crawler.sendMessage("me", { message: "The Crawler has been started" });
+    return crawler;
   }catch(e){
     console.error(e);
     await sleep(60000);
     return await startCrawler();
   }
-  crawler.logger.info(`Session: ${crawler.session.save()}`);
-  //await crawler.sendMessage("me", { message: "The Crawler has been started" });
-  return crawler;
 }
 (async () => {
   const bot = new TelegramClient(new StringSession(), apiId, apiHash, {
