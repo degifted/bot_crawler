@@ -116,6 +116,7 @@ async function startCrawler(){
   await bot.start({botAuthToken});
   bot.addEventHandler(async (event) => {
     const msg = event.message;
+    crawler.logger.info(`${msg.sender.username}[${msg.senderId}]: "${msg.text}"`);
     if (msg.text == "/status"){
       await msg.reply({
         message: Object.keys(chatMembers)
