@@ -184,7 +184,10 @@ async function startCrawler(){
         }
       }catch(e){
         crawler.logger.error(e);
-        if (e.message.includes('username') || e.errorMessage == 'USERNAME_INVALID') continue;
+        if (e.message.includes('username') || e.errorMessage == 'USERNAME_INVALID'){
+          await sleep(2000);
+          continue;
+        }
         if (e.name == 'FloodWaitError'){
           await sleep(60000);
           continue;
