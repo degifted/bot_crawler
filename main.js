@@ -11,7 +11,7 @@ const stringSession = new StringSession("1AgAOMTQ5LjE1NC4xNjcuNTEBu51gcL1193vWXJ
 
 let chats = `
 LeonidaBedy6810
-Graewka97
+Graewka97`;/*
 minsk_baraholka7
 ideas97pro_chat
 lelchicy97pro
@@ -84,14 +84,14 @@ polesie97_chat
 polevaya_minsk
 poligonby
 politdvizh
-`;
+`;*/
 
 const chatMembers = {};
 async function startCrawler(){
   try{
     const crawler = new TelegramClient(stringSession, apiId, apiHash, {
       connectionRetries: 5,
-      floodSleepThreshold: 1//2000,
+      floodSleepThreshold: 10,
     });
     await crawler.start({
       phoneNumber: async () => await input.text("Please enter your number: "),
@@ -109,6 +109,7 @@ async function startCrawler(){
   }
 }
 (async () => {
+  let crawler = await startCrawler();
   const bot = new TelegramClient(new StringSession(), apiId, apiHash, {
     connectionRetries: 5,
     floodSleepThreshold: 6000,
@@ -123,22 +124,32 @@ async function startCrawler(){
           .map(chatName => `${chatName}: ${chatMembers[chatName].processedMessages}/${chatMembers[chatName].totalMessages}`)
           .join('\n')
       });
+    } else if (msg.text.startsWith("/restart")){
+      await crawler.destroy();
+      crawler = await startCrawler();
     } else if (msg.text.startsWith("/add")){
       chats += msg.text.substring(4) + '\n';
+    } else if (msg.text.startsWith("/check")){
+      const id = Number(msg.text.substring(6));
+      let reply = "";
+      for (const chatName of Object.keys(chatMembers)){
+        if (chatMembers[chatName].ids.includes(id)){
+          reply += `${chatName}\n`;
+        }
+      }
+      await msg.reply({ message: reply.length ? reply : "Не найдено" });
     } else if (msg.text.startsWith("/del")){
       chats = chats.replace(msg.text.substring(4), '');
     }else{
       let reply = "";
       for (const chatName of Object.keys(chatMembers)){
-        if (chatMembers[chatName].ids.includes(+msg._senderId)){
+        if (chatMembers[chatName].ids.includes(+msg.senderId)){
           reply += `${chatName}\n`;
         }
       }
       await msg.reply({ message: reply.length ? reply : "Не найдено" });
     }
   }, new NewMessage());
-
-  let crawler = await startCrawler();
 
   while(true){
     for (const chatName of chats.split(/\W/).map(c => c.trim()).filter(c => c.length)){
