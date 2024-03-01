@@ -11,7 +11,7 @@ const stringSession = new StringSession("1AgAOMTQ5LjE1NC4xNjcuNTEBu51gcL1193vWXJ
 
 let chats = `
 LeonidaBedy6810
-Graewka97`;/*
+Graewka97
 minsk_baraholka7
 ideas97pro_chat
 lelchicy97pro
@@ -84,7 +84,7 @@ polesie97_chat
 polevaya_minsk
 poligonby
 politdvizh
-`;*/
+`;
 
 const chatMembers = {};
 async function startCrawler(){
